@@ -1,0 +1,12 @@
+{
+  "name": "dossier",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "scripts/install-deps.sh",
+    "start": "scripts/start.sh",
+    "stop": "scripts/stop.sh",
+    "build": "npm --prefix frontend run build",
+    "test:e2e": "npm --prefix frontend run test:e2e"
+  }
+}
