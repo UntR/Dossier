@@ -149,11 +149,12 @@ export function InboxPageClient() {
 
   return (
     <PageSection
-      title="审核"
+      title="审核队列"
+      description="抽取结果先在这里人工确认，接受、拒绝或修正后才写入档案。"
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex items-center gap-2 text-sm">
-            <span className="font-medium text-slate-700">状态筛选</span>
+            <span className="font-medium text-[color:var(--dossier-muted)]">状态筛选</span>
             <select
               aria-label="状态筛选"
               value={statusFilter}
@@ -164,7 +165,7 @@ export function InboxPageClient() {
                 setEditingPayload("");
                 setRepairReasons({});
               }}
-              className="min-h-9 rounded border border-slate-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-slate-500"
+              className="min-h-9 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-3 py-1.5 text-sm outline-none focus:border-[color:var(--dossier-green)]"
             >
               <option value="pending">待审核</option>
               <option value="auto_applied">自动应用</option>
@@ -182,33 +183,26 @@ export function InboxPageClient() {
       }
     >
       <StatusMessage error={error} message={message} />
-      <div className="overflow-hidden rounded border border-slate-200 bg-white">
-        <table className="w-full border-collapse text-left text-sm">
-          <thead className="bg-slate-100 text-slate-600">
-            <tr>
-              <th className="px-4 py-3 font-medium">类型</th>
-              <th className="px-4 py-3 font-medium">摘要</th>
-              <th className="px-4 py-3 font-medium">置信度</th>
-              <th className="px-4 py-3 font-medium">状态</th>
-              <th className="px-4 py-3 font-medium">操作</th>
-            </tr>
-          </thead>
-          <tbody>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <section className="dossier-panel">
+          <div className="dossier-panel-header">
+            <h2 className="text-sm font-semibold">待处理变更</h2>
+            <span className="dossier-chip">{items.length} 条</span>
+          </div>
+          <div className="grid gap-3 p-3">
             {items.map((item) => (
-              <tr key={item.id} className="border-t border-slate-100">
-                <td className="px-4 py-3 font-mono text-xs">{item.kind}</td>
-                <td className="px-4 py-3">
-                  <div className="grid gap-2">
-                    {renderExtractionDetails(item, diffCurrentValues[item.id])}
-                    {editingId === item.id ? (
-                      renderExtractionEditor(item, editingPayload, setEditingPayload)
-                    ) : null}
+              <article key={item.id} className="rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)]">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel-soft)] px-3 py-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-xs text-[color:var(--dossier-blue)]">{item.kind}</span>
+                    <span className="dossier-chip">{item.status}</span>
+                    <span className="text-xs text-[color:var(--dossier-muted)]">置信度：{item.confidence ?? "-"}</span>
                   </div>
-                </td>
-                <td className="px-4 py-3">{item.confidence ?? "-"}</td>
-                <td className="px-4 py-3">{item.status}</td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-2">
+                </div>
+                <div className="grid gap-3 p-3 text-sm">
+                  {renderExtractionDetails(item, diffCurrentValues[item.id])}
+                  {editingId === item.id ? renderExtractionEditor(item, editingPayload, setEditingPayload) : null}
+                  <div className="flex flex-wrap gap-2">
                     {item.status === "pending" && editingId !== item.id ? (
                       <>
                         <ActionButton type="button" icon={<Check size={16} />} onClick={() => accept(item)}>接受</ActionButton>
@@ -249,16 +243,14 @@ export function InboxPageClient() {
                       <ActionButton type="button" variant="danger" icon={<RotateCcw size={16} />} onClick={() => undo(item)}>撤销</ActionButton>
                     ) : null}
                   </div>
-                </td>
-              </tr>
+                </div>
+              </article>
             ))}
-            {items.length === 0 ? (
-              <tr><td className="px-4 py-6 text-slate-500" colSpan={5}>暂无待审核抽取</td></tr>
-            ) : null}
-          </tbody>
-        </table>
+            {items.length === 0 ? <p className="px-3 py-6 text-sm text-[color:var(--dossier-muted)]">暂无待审核抽取</p> : null}
+          </div>
+        </section>
+        {renderInboxLogs(logs)}
       </div>
-      {renderInboxLogs(logs)}
     </PageSection>
   );
 }
@@ -268,15 +260,15 @@ function renderExtractionEditor(item: Extraction, editingPayload: string, setEdi
   return (
     <div className="grid gap-2">
       {structuredRows.length > 0 ? (
-        <div className="grid gap-2 rounded border border-slate-200 bg-white p-3 text-xs">
+        <div className="grid gap-2 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel-soft)] p-3 text-xs">
           {structuredRows.map((row) => (
             <label key={row.field} className="grid gap-1 sm:grid-cols-[10rem_1fr] sm:items-center">
-              <span className="font-medium text-slate-700">新值 {row.field}</span>
+              <span className="font-medium text-[color:var(--dossier-muted)]">新值 {row.field}</span>
               <input
                 aria-label={`新值 ${row.field}`}
                 value={editableValue(row.value)}
                 onChange={(event) => setEditingPayload(updateEditingPayload(item, editingPayload, row.field, event.target.value))}
-                className="min-h-9 rounded border border-slate-200 bg-white px-2 text-sm outline-none focus:border-slate-500"
+                className="min-h-9 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-2 text-sm outline-none focus:border-[color:var(--dossier-green)]"
               />
             </label>
           ))}
@@ -318,11 +310,13 @@ async function loadDiffCurrentValues(items: Extraction[], request: LoggedRequest
 
 function renderInboxLogs(logs: InboxLogEntry[]) {
   return (
-    <section className="rounded border border-slate-200 bg-white p-4">
-      <h2 className="text-base font-semibold">日志</h2>
+    <section className="dossier-panel">
+      <div className="dossier-panel-header">
+        <h2 className="text-base font-semibold">操作日志</h2>
+      </div>
       <div className="mt-3 grid gap-2 text-xs">
         {logs.map((log) => (
-          <div key={log.id} className={`grid gap-1 rounded border p-2 ${log.level === "error" ? "border-rose-100 bg-rose-50 text-rose-800" : "border-slate-100 bg-slate-50 text-slate-700"}`}>
+          <div key={log.id} className={`mx-3 grid gap-1 rounded-[8px] border p-2 ${log.level === "error" ? "border-[#dfb8aa] bg-[#f6e5df] text-[color:var(--dossier-rust)]" : "border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel-soft)] text-[color:var(--dossier-muted)]"}`}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono">{log.time}</span>
               <span className="font-medium">{log.action}</span>
@@ -331,7 +325,7 @@ function renderInboxLogs(logs: InboxLogEntry[]) {
             <div>{log.detail}</div>
           </div>
         ))}
-        {logs.length === 0 ? <div className="text-slate-500">暂无日志</div> : null}
+        {logs.length === 0 ? <div className="px-3 pb-3 text-[color:var(--dossier-muted)]">暂无日志</div> : null}
       </div>
     </section>
   );
@@ -355,15 +349,15 @@ function renderDiffSummary(title: string, rows: Array<{ field: string; current: 
   return (
     <div className="grid gap-2">
       <p>{title}</p>
-      <div className="grid gap-2 rounded border border-slate-200 bg-slate-50 p-3 text-xs">
+      <div className="grid gap-2 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel-soft)] p-3 text-xs">
         {rows.map((row) => (
           <div key={row.field} className="grid gap-1 sm:grid-cols-[10rem_1fr_1fr] sm:items-start">
-            <div className="font-mono text-slate-700">{row.field}</div>
-            <div><span className="font-medium text-slate-600">现状：</span>{displayValue(row.current)}</div>
-            <div><span className="font-medium text-slate-600">新值：</span>{displayValue(row.value)}</div>
+            <div className="font-mono text-[color:var(--dossier-blue)]">{row.field}</div>
+            <div><span className="font-medium text-[color:var(--dossier-muted)]">现状：</span>{displayValue(row.current)}</div>
+            <div><span className="font-medium text-[color:var(--dossier-muted)]">新值：</span>{displayValue(row.value)}</div>
           </div>
         ))}
-        {rows.length === 0 ? <div className="text-slate-500">无可显示变更</div> : null}
+        {rows.length === 0 ? <div className="text-[color:var(--dossier-muted)]">无可显示变更</div> : null}
       </div>
     </div>
   );

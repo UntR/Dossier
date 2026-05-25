@@ -27,6 +27,32 @@ class FakeOllamaClient:
         return FakeOllamaResponse()
 
 
+class FakeOpenAIResponse:
+    def raise_for_status(self):
+        return None
+
+    def json(self):
+        return {"data": [{"id": "google/gemma-4-e4b"}, {"id": "text-embedding-nomic-embed-text-v1.5"}]}
+
+
+class FakeOpenAIClient:
+    def __init__(self, base_url: str, timeout: float):
+        self.base_url = base_url
+        self.timeout = timeout
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        return None
+
+    def get(self, path: str):
+        assert self.base_url == "http://lmstudio.test/v1"
+        assert self.timeout == 1.0
+        assert path == "/models"
+        return FakeOpenAIResponse()
+
+
 def test_settings_get_patch_and_model_probe(client, monkeypatch):
     settings = unwrap(client.get("/api/settings"))
     assert settings["chat_model"] == "anthropic/claude-sonnet-4-6"
@@ -56,3 +82,16 @@ def test_model_probe_lists_ollama_tags(client, monkeypatch):
     ollama = next(provider for provider in models["providers"] if provider["provider"] == "ollama")
     assert ollama["configured"] is True
     assert ollama["models"] == ["ollama/qwen3:1.7b", "ollama/bge-m3:latest"]
+
+
+def test_model_probe_lists_openai_compatible_models(client, monkeypatch):
+    monkeypatch.setenv("OPENAI_API_BASE", "http://lmstudio.test/v1")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setenv("OLLAMA_BASE_URL", "")
+    monkeypatch.setattr("app.api.settings.httpx.Client", FakeOpenAIClient)
+
+    models = unwrap(client.get("/api/settings/models"))
+
+    openai = next(provider for provider in models["providers"] if provider["provider"] == "openai")
+    assert openai["configured"] is True
+    assert openai["models"] == ["openai/google/gemma-4-e4b", "openai/text-embedding-nomic-embed-text-v1.5"]

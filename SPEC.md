@@ -1,8 +1,8 @@
 ---
 type: spec
-status: draft-v1
+status: v1-core-v2-webui-surface
 created: 2026-05-23
-updated: 2026-05-23
+updated: 2026-05-25
 ---
 
 # Dossier — Software Design Specification
@@ -10,6 +10,8 @@ updated: 2026-05-23
 > 中国式人际沟通的 AI 顾问 + 用户拥有的关系记忆库。本文件是给 codex 的实施蓝本。
 
 产品定位、价值主张、思考链路见 [README.md](README.md)。本 spec 只讲**怎么造**。
+
+当前仓库状态：`main` 以 `https://github.com/UntR/Dossier` 为权威远端；当前实现是 **v1 数据/API 底座 + v2 WebUI 表层重构**。v2 WebUI 已把主导航收敛到 `/chat`、`/people`、`/inbox`、`/timeline`、`/self`、`/settings`；旧 `/entities`、`/import`、`/search` 路由仍保留为兼容/次级入口，尚未删除。不要把 Phase 8 宣称完成，除非重新逐项验收并记录证据。
 
 ---
 
@@ -372,7 +374,9 @@ REST，所有路径前缀 `/api`。统一返回 `{ ok: bool, data?, error? }`。
 
 ## 5. 前端页面
 
-Next.js App Router。路由结构：
+Next.js App Router。当前主导航遵循 v2 精简版，只暴露 6 个一级页面：`/chat`、`/people`、`/inbox`、`/timeline`、`/self`、`/settings`。全局搜索在顶部直接展开结果，不再把 `/search` 作为主流程页面。旧 `/entities`、`/import`、`/search` 路由仍在仓库中，作为兼容/次级入口保留，删除或重定向需要单独决策。
+
+当前主路由结构：
 
 ```
 app/
@@ -386,13 +390,10 @@ app/
 │   ├── page.tsx               # 列表
 │   ├── [id]/page.tsx          # 详情
 │   └── new/page.tsx
-├── entities/...
 ├── timeline/page.tsx
 ├── inbox/page.tsx
-├── import/page.tsx
 ├── settings/page.tsx
-├── self/page.tsx
-└── search/page.tsx
+└── self/page.tsx
 ```
 
 ### 5.1 `/chat` — 对话

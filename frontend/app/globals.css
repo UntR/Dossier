@@ -3,9 +3,22 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
-  --border: 214 32% 91%;
+  --background: 43 29% 94%;
+  --foreground: 120 11% 14%;
+  --border: 40 24% 80%;
+  --dossier-bg: #f4f2eb;
+  --dossier-rail: #e7e1d4;
+  --dossier-panel: #fffdf7;
+  --dossier-panel-soft: #faf6ec;
+  --dossier-panel-muted: #ece8dd;
+  --dossier-line: #d7d0c2;
+  --dossier-ink: #202824;
+  --dossier-muted: #66706a;
+  --dossier-green: #365c45;
+  --dossier-green-soft: #d7e4d4;
+  --dossier-rust: #9b4f34;
+  --dossier-gold: #c69a48;
+  --dossier-blue: #315b7d;
 }
 
 * {
@@ -14,12 +27,78 @@
 
 body {
   margin: 0;
-  color: hsl(var(--foreground));
-  background: hsl(var(--background));
+  color: var(--dossier-ink);
+  background: var(--dossier-bg);
   font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+.dossier-panel {
+  overflow: hidden;
+  border: 1px solid var(--dossier-line);
+  border-radius: 8px;
+  background: var(--dossier-panel);
+}
+
+.dossier-panel-header {
+  min-height: 44px;
+  border-bottom: 1px solid var(--dossier-line);
+  background: var(--dossier-panel-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+}
+
+.dossier-muted {
+  color: var(--dossier-muted);
+}
+
+.dossier-chip {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  border: 1px solid var(--dossier-line);
+  border-radius: 999px;
+  background: var(--dossier-panel);
+  color: var(--dossier-muted);
+  padding: 4px 10px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.dossier-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.dossier-table th {
+  background: var(--dossier-panel-muted);
+  color: var(--dossier-muted);
+  font-weight: 600;
+}
+
+.dossier-table th,
+.dossier-table td {
+  border-top: 1px solid var(--dossier-line);
+  padding: 12px 14px;
+  vertical-align: top;
+}
+
+.dossier-table thead th {
+  border-top: 0;
 }

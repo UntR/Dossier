@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
-import { Plus, RefreshCw, Save, Search, Trash2 } from "lucide-react";
+import { Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 
 import { ActionButton } from "@/components/action-button";
 import { Field, TextArea, TextInput } from "@/components/form-field";
@@ -62,57 +62,72 @@ export function PeoplePageClient() {
 
   return (
     <PageSection
-      title="人物"
+      title="人物档案"
+      description="人物列表是 v2 的核心索引；导入和编辑能力收进人物详情或 API 流程。"
       actions={
         <ActionButton variant="secondary" icon={<RefreshCw size={16} />} title="刷新" onClick={() => load().catch((err: Error) => setError(err.message))}>
           刷新
         </ActionButton>
       }
     >
-      <form onSubmit={(event) => { event.preventDefault(); load().catch((err: Error) => setError(err.message)); }} className="flex flex-wrap gap-2">
-        <TextInput value={query} onChange={(event) => setQuery(event.target.value)} placeholder="按姓名、别名、简介搜索" />
-        <ActionButton icon={<Search size={16} />}>搜索</ActionButton>
-      </form>
-
-      <form onSubmit={create} className="grid gap-3 rounded border border-slate-200 bg-white p-4 md:grid-cols-4">
-        <Field label="姓名"><TextInput name="name" required /></Field>
-        <Field label="别名"><TextInput name="aliases" placeholder="小张，张总" /></Field>
-        <Field label="重要度"><TextInput name="importance" type="number" min="0" max="5" defaultValue="0" /></Field>
-        <div className="flex items-end"><ActionButton icon={<Plus size={16} />}>新建</ActionButton></div>
-        <div className="md:col-span-4">
-          <Field label="简介"><TextArea name="bio" /></Field>
-        </div>
-      </form>
       <StatusMessage error={error} message={message} />
 
-      <div className="overflow-hidden rounded border border-slate-200 bg-white">
-        <table className="w-full border-collapse text-left text-sm">
-          <thead className="bg-slate-100 text-slate-600">
-            <tr>
-              <th className="px-4 py-3 font-medium">姓名</th>
-              <th className="px-4 py-3 font-medium">别名</th>
-              <th className="px-4 py-3 font-medium">简介</th>
-              <th className="px-4 py-3 font-medium">重要度</th>
-              <th className="px-4 py-3 font-medium">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((person) => (
-              <tr key={person.id} className="border-t border-slate-100">
-                <td className="px-4 py-3 font-medium"><Link href={`/people/${person.id}`} className="hover:underline">{person.name}</Link></td>
-                <td className="px-4 py-3 text-slate-600">{joinList(person.aliases)}</td>
-                <td className="px-4 py-3 text-slate-600">{person.bio}</td>
-                <td className="px-4 py-3">{person.importance ?? 0}</td>
-                <td className="px-4 py-3">
-                  <ActionButton type="button" variant="danger" icon={<Trash2 size={16} />} onClick={() => remove(person)}>删除</ActionButton>
-                </td>
-              </tr>
-            ))}
-            {items.length === 0 ? (
-              <tr><td className="px-4 py-6 text-slate-500" colSpan={5}>暂无人物</td></tr>
-            ) : null}
-          </tbody>
-        </table>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <section className="dossier-panel">
+          <div className="dossier-panel-header">
+            <div>
+              <h2 className="text-sm font-semibold">人物列表</h2>
+              <p className="text-xs text-[color:var(--dossier-muted)]">{items.length} 个档案</p>
+            </div>
+            <form onSubmit={(event) => { event.preventDefault(); load().catch((err: Error) => setError(err.message)); }} className="flex min-w-[320px] max-w-md flex-1 gap-2">
+              <TextInput value={query} onChange={(event) => setQuery(event.target.value)} placeholder="按姓名、别名、简介搜索" />
+              <ActionButton icon={<Search size={16} />}>搜索</ActionButton>
+            </form>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="dossier-table">
+              <thead>
+                <tr>
+                  <th>姓名</th>
+                  <th>别名</th>
+                  <th>简介</th>
+                  <th>重要度</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((person) => (
+                  <tr key={person.id}>
+                    <td className="font-medium"><Link href={`/people/${person.id}`} className="hover:underline">{person.name}</Link></td>
+                    <td className="text-[color:var(--dossier-muted)]">{joinList(person.aliases)}</td>
+                    <td className="max-w-xl text-[color:var(--dossier-muted)]">{person.bio}</td>
+                    <td>{person.importance ?? 0}</td>
+                    <td>
+                      <ActionButton type="button" variant="danger" icon={<Trash2 size={16} />} onClick={() => remove(person)}>删除</ActionButton>
+                    </td>
+                  </tr>
+                ))}
+                {items.length === 0 ? (
+                  <tr><td className="px-4 py-6 text-[color:var(--dossier-muted)]" colSpan={5}>暂无人物</td></tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside className="dossier-panel">
+          <div className="dossier-panel-header">
+            <h2 className="text-sm font-semibold">新建人物</h2>
+            <span className="dossier-chip">手动补录</span>
+          </div>
+          <form onSubmit={create} className="grid gap-3 p-4">
+            <Field label="姓名"><TextInput name="name" required /></Field>
+            <Field label="别名"><TextInput name="aliases" placeholder="小张，张总" /></Field>
+            <Field label="重要度"><TextInput name="importance" type="number" min="0" max="5" defaultValue="0" /></Field>
+            <Field label="简介"><TextArea name="bio" /></Field>
+            <ActionButton icon={<Plus size={16} />}>新建</ActionButton>
+          </form>
+        </aside>
       </div>
     </PageSection>
   );

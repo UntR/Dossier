@@ -47,6 +47,7 @@ def patch_settings(payload: dict[str, Any], db: Session = Depends(get_db)):
 
 @router.get("/models")
 def list_models():
+    openai_configured, openai_models = openai_provider_models()
     ollama_configured, ollama_models = ollama_provider_models()
     providers = [
         {
@@ -56,8 +57,8 @@ def list_models():
         },
         {
             "provider": "openai",
-            "configured": bool(os.getenv("OPENAI_API_KEY")),
-            "models": PROVIDER_MODELS["openai"],
+            "configured": openai_configured,
+            "models": openai_models,
         },
         {
             "provider": "google",
@@ -71,6 +72,24 @@ def list_models():
         },
     ]
     return ok({"providers": providers})
+
+
+def openai_provider_models() -> tuple[bool, list[str]]:
+    base_url = os.getenv("OPENAI_API_BASE", "")
+    if not base_url:
+        return bool(os.getenv("OPENAI_API_KEY")), PROVIDER_MODELS["openai"]
+    try:
+        with httpx.Client(base_url=base_url, timeout=1.0) as client:
+            response = client.get("/models")
+            response.raise_for_status()
+            models = [
+                f"openai/{model['id']}"
+                for model in response.json().get("data", [])
+                if model.get("id")
+            ]
+    except (httpx.HTTPError, KeyError, TypeError, ValueError):
+        return True, PROVIDER_MODELS["openai"]
+    return True, models or PROVIDER_MODELS["openai"]
 
 
 def ollama_provider_models() -> tuple[bool, list[str]]:

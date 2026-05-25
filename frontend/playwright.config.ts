@@ -1,10 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from "node:path";
 
-const root = "/Users/rzhang15/Documents/Dossier";
+const root = path.resolve(__dirname, "..");
+const posixRoot = root.replace(/\\/g, "/");
 const apiPort = 45631;
 const webPort = 45632;
 const runId = Date.now();
-const databaseUrl = `sqlite:////${root}/.e2e-data/dossier-${runId}.db`;
+const databaseUrl = `sqlite:///${posixRoot}/.e2e-data/dossier-${runId}.db`;
 
 export default defineConfig({
   testDir: "./tests",
@@ -22,7 +24,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: `cd ${root} && mkdir -p .e2e-data/uploads .e2e-data/exports && DATABASE_URL=${databaseUrl} .venv/bin/alembic -c backend/alembic.ini upgrade head && DATABASE_URL=${databaseUrl} UPLOAD_DIR=${root}/.e2e-data/uploads EXPORT_DIR=${root}/.e2e-data/exports .venv/bin/uvicorn app.main:create_app --factory --host 127.0.0.1 --port ${apiPort}`,
+      command: `cd "${root}" && mkdir -p .e2e-data/uploads .e2e-data/exports && DATABASE_URL=${databaseUrl} .venv/bin/alembic -c backend/alembic.ini upgrade head && DATABASE_URL=${databaseUrl} UPLOAD_DIR="${posixRoot}/.e2e-data/uploads" EXPORT_DIR="${posixRoot}/.e2e-data/exports" .venv/bin/uvicorn app.main:create_app --factory --host 127.0.0.1 --port ${apiPort}`,
       url: `http://127.0.0.1:${apiPort}/health`,
       reuseExistingServer: false,
       timeout: 20_000

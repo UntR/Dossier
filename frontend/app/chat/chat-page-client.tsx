@@ -146,7 +146,8 @@ export function ChatPageClient() {
 
   return (
     <PageSection
-      title="对话"
+      title="对话驾驶舱"
+      description="从对话开始检索记忆、生成回复，并把候选变更送入审核队列。"
       actions={
         <div className="flex gap-2">
           <ActionButton type="button" variant="secondary" icon={<RefreshCw size={16} />} onClick={() => loadSessions().catch((err: Error) => setError(err.message))}>
@@ -160,57 +161,74 @@ export function ChatPageClient() {
     >
       <StatusMessage error={error} message={message} />
       {extractionSummary ? (
-        <div className="flex flex-wrap items-center gap-3 rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <div className="flex flex-wrap items-center gap-3 rounded-[8px] border border-[#b9cfb6] bg-[color:var(--dossier-green-soft)] px-4 py-3 text-sm text-[color:var(--dossier-green)]">
           <span>
             抽取了 {extractionSummary.created} 项，{extractionSummary.auto_applied} 项已自动应用，{extractionSummary.pending} 项待审核
           </span>
           {extractionSummary.pending > 0 ? <Link href="/inbox" className="font-medium underline">去审核</Link> : null}
         </div>
       ) : null}
-      <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)_320px]">
-        <aside className="rounded border border-slate-200 bg-white p-3">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">会话</h2>
-          <div className="space-y-2">
+      <div className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
+        <aside className="dossier-panel">
+          <div className="dossier-panel-header">
+            <h2 className="text-sm font-semibold">会话</h2>
+            <span className="dossier-chip">{sessions.length}</span>
+          </div>
+          <div className="space-y-2 p-3">
             {sessions.map((session) => (
               <button
                 key={session.id}
                 type="button"
                 onClick={() => loadSession(session.id).catch((err: Error) => setError(err.message))}
-                className={`w-full rounded border px-3 py-2 text-left text-sm ${session.id === selectedSessionId ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 hover:bg-slate-50"}`}
+                className={`w-full rounded-[8px] border px-3 py-2 text-left text-sm transition ${
+                  session.id === selectedSessionId
+                    ? "border-[color:var(--dossier-green)] bg-[color:var(--dossier-green-soft)]"
+                    : "border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] hover:bg-[color:var(--dossier-panel-soft)]"
+                }`}
               >
                 <span className="block truncate font-medium">{session.title || `会话 ${session.id}`}</span>
-                <span className="block truncate text-xs opacity-75">{session.ended_at ? "已结束" : "进行中"}</span>
+                <span className="block truncate text-xs text-[color:var(--dossier-muted)]">{session.ended_at ? "已结束" : "进行中"}</span>
               </button>
             ))}
-            {sessions.length === 0 ? <p className="text-sm text-slate-500">暂无会话</p> : null}
+            {sessions.length === 0 ? <p className="text-sm text-[color:var(--dossier-muted)]">暂无会话</p> : null}
           </div>
         </aside>
 
-        <section className="flex min-h-[620px] flex-col rounded border border-slate-200 bg-white">
-          <div className="border-b border-slate-100 px-4 py-3">
+        <section className="dossier-panel flex min-h-[620px] flex-col">
+          <div className="dossier-panel-header">
             <h2 className="text-base font-semibold">{selectedSession?.title || "新会话"}</h2>
+            <span className="dossier-chip">引用优先</span>
+          </div>
+          <div className="flex flex-wrap gap-2 border-b border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel-soft)] px-4 py-2 text-xs text-[color:var(--dossier-muted)]">
+            <span>当前聚焦：{context?.people?.[0]?.name ?? "未锁定"}</span>
+            <span>相关人物：{context?.people?.length ?? 0}</span>
+            <span>相关事件：{context?.events?.length ?? 0}</span>
           </div>
           <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
             {messages.map((item, index) => (
               <div key={`${item.role}-${item.id ?? index}`} className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[78%] whitespace-pre-wrap rounded px-3 py-2 text-sm ${item.role === "user" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-900"}`}>
+                <div className={`max-w-[78%] whitespace-pre-wrap rounded-[8px] border px-3 py-2 text-sm leading-6 ${
+                  item.role === "user"
+                    ? "border-[#c7d8c3] bg-[color:var(--dossier-green-soft)]"
+                    : "border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel-soft)]"
+                }`}>
                   {item.content || (item.role === "assistant" && sending ? "生成中..." : "")}
                 </div>
               </div>
             ))}
-            {messages.length === 0 ? <p className="text-sm text-slate-500">输入一条消息开始对话</p> : null}
+            {messages.length === 0 ? <p className="text-sm text-[color:var(--dossier-muted)]">输入一条消息开始对话</p> : null}
           </div>
-          <form onSubmit={submitMessage} className="space-y-3 border-t border-slate-100 p-4">
+          <form onSubmit={submitMessage} className="space-y-3 border-t border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel-soft)] p-4">
             <Field label="消息">
               <TextArea name="content" placeholder="粘贴对方消息，或直接描述你想怎么回" disabled={sending} required />
             </Field>
             <div className="flex flex-wrap items-end gap-3">
               <label className="grid gap-1 text-sm">
-                <span className="font-medium text-slate-700">对话模型</span>
+                <span className="font-medium text-[color:var(--dossier-muted)]">对话模型</span>
                 <select
                   value={chatModel}
                   onChange={(event) => selectModel(event.target.value)}
-                  className="min-h-10 rounded border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
+                  className="min-h-10 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-3 py-2 text-sm outline-none focus:border-[color:var(--dossier-green)]"
                 >
                   {(models.length ? models : [chatModel]).map((model) => (
                     <option key={model} value={model}>{model}</option>
@@ -235,35 +253,53 @@ export function ChatPageClient() {
 
 function ContextPanel({ context }: { context: ChatContext | null }) {
   return (
-    <aside className="space-y-4 rounded border border-slate-200 bg-white p-4">
-      <h2 className="text-base font-semibold">本次引用</h2>
+    <aside className="dossier-panel">
+      <div className="dossier-panel-header">
+        <h2 className="text-base font-semibold">上下文</h2>
+      </div>
+      <div className="space-y-4 p-4">
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel-soft)] p-2">
+          <strong className="block text-lg">{context?.people?.length ?? 0}</strong>
+          <span className="text-xs text-[color:var(--dossier-muted)]">人物</span>
+        </div>
+        <div className="rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel-soft)] p-2">
+          <strong className="block text-lg">{context?.relationships?.length ?? 0}</strong>
+          <span className="text-xs text-[color:var(--dossier-muted)]">关系</span>
+        </div>
+        <div className="rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel-soft)] p-2">
+          <strong className="block text-lg">{context?.events?.length ?? 0}</strong>
+          <span className="text-xs text-[color:var(--dossier-muted)]">事件</span>
+        </div>
+      </div>
       {context?.self ? (
         <section className="space-y-1 text-sm">
-          <h3 className="font-medium text-slate-700">我的画像</h3>
+          <h3 className="font-medium text-[color:var(--dossier-muted)]">我的画像</h3>
           <p>{context.self.name}</p>
-          {context.self.communication_style ? <p className="text-slate-600">沟通风格：{context.self.communication_style}</p> : null}
+          {context.self.communication_style ? <p className="text-[color:var(--dossier-muted)]">沟通风格：{context.self.communication_style}</p> : null}
         </section>
       ) : null}
       <section className="space-y-2">
-        <h3 className="text-sm font-medium text-slate-700">相关人物</h3>
+        <h3 className="text-sm font-medium text-[color:var(--dossier-muted)]">相关人物</h3>
         {(context?.people ?? []).map((person) => (
-          <div key={person.id} className="rounded border border-slate-100 p-3 text-sm">
+          <div key={person.id} className="rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel-soft)] p-3 text-sm">
             <p className="font-medium">{person.name}</p>
-            {person.bio ? <p className="mt-1 text-slate-600">{person.bio}</p> : null}
+            {person.bio ? <p className="mt-1 text-[color:var(--dossier-muted)]">{person.bio}</p> : null}
           </div>
         ))}
-        {(context?.people ?? []).length === 0 ? <p className="text-sm text-slate-500">暂无命中的人物</p> : null}
+        {(context?.people ?? []).length === 0 ? <p className="text-sm text-[color:var(--dossier-muted)]">暂无命中的人物</p> : null}
       </section>
       <section className="space-y-2">
-        <h3 className="text-sm font-medium text-slate-700">相关事件</h3>
+        <h3 className="text-sm font-medium text-[color:var(--dossier-muted)]">相关事件</h3>
         {(context?.events ?? []).map((event) => (
-          <div key={event.id} className="rounded border border-slate-100 p-3 text-sm">
+          <div key={event.id} className="rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel-soft)] p-3 text-sm">
             <p className="font-medium">{event.title}</p>
-            {event.occurred_at ? <p className="mt-1 text-slate-600">{event.occurred_at}</p> : null}
+            {event.occurred_at ? <p className="mt-1 text-[color:var(--dossier-muted)]">{event.occurred_at}</p> : null}
           </div>
         ))}
-        {(context?.events ?? []).length === 0 ? <p className="text-sm text-slate-500">暂无相关事件</p> : null}
+        {(context?.events ?? []).length === 0 ? <p className="text-sm text-[color:var(--dossier-muted)]">暂无相关事件</p> : null}
       </section>
+      </div>
     </aside>
   );
 }

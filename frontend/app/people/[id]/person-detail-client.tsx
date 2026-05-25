@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
-import { Merge, Save, Trash2, Upload } from "lucide-react";
+import { ClipboardPaste, FileUp, Merge, Save, Trash2, Upload } from "lucide-react";
 
 import { ActionButton } from "@/components/action-button";
 import { Field, TextArea, TextInput } from "@/components/form-field";
 import { PageSection } from "@/components/page-section";
 import { StatusMessage } from "@/components/status-message";
-import { apiForm, apiGet, apiJson, apiUrl, EventItem, joinList, LifeStage, Person, Relationship, splitList, toNumber } from "@/lib/api";
+import { apiForm, apiGet, apiJson, apiUrl, EventItem, ImportResult, joinList, LifeStage, Person, Relationship, splitList, toNumber } from "@/lib/api";
 
 type StageAssignment = {
   id: number;
@@ -33,6 +33,8 @@ export function PersonDetailClient({ id }: { id: number }) {
   const [people, setPeople] = useState<Person[]>([]);
   const [stages, setStages] = useState<LifeStage[]>([]);
   const [tab, setTab] = useState("profile");
+  const [memoryText, setMemoryText] = useState("");
+  const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -214,6 +216,62 @@ export function PersonDetailClient({ id }: { id: number }) {
     }
   }
 
+  async function importMemoryFile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const files = form.getAll("file").filter((file): file is File => file instanceof File && file.size > 0);
+    if (files.length === 0) {
+      setError("请选择文件");
+      return;
+    }
+    setImporting(true);
+    setError(null);
+    setMessage(null);
+    try {
+      let created = 0;
+      for (const file of files) {
+        const batchForm = new FormData();
+        batchForm.set("file", file);
+        batchForm.set("target_type", "person");
+        batchForm.set("target_id", String(id));
+        const result = await apiForm<ImportResult>("/api/import/file", batchForm);
+        created += result.created;
+      }
+      setMessage(`已导入 ${created} 条记忆`);
+      event.currentTarget.reset();
+      await load();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function importMemoryText(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!memoryText.trim()) {
+      setError("请填写粘贴文本");
+      return;
+    }
+    setImporting(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const form = new FormData();
+      form.set("file", new File([memoryText], `${detail?.person.name ?? "person"}-memory.txt`, { type: "text/plain" }));
+      form.set("target_type", "person");
+      form.set("target_id", String(id));
+      const result = await apiForm<ImportResult>("/api/import/file", form);
+      setMessage(`已导入 ${result.created} 条记忆`);
+      setMemoryText("");
+      await load();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setImporting(false);
+    }
+  }
+
   if (!detail) {
     return <PageSection title="人物详情"><StatusMessage error={error} message="加载中" /></PageSection>;
   }
@@ -224,15 +282,16 @@ export function PersonDetailClient({ id }: { id: number }) {
     ["relationships", "关系"],
     ["events", "事件"],
     ["stages", "阶段"],
-    ["notes", "笔记"]
+    ["notes", "笔记"],
+    ["import", "导入记忆"]
   ];
 
   return (
-    <PageSection title={person.name} actions={<Link href="/people" className="text-sm text-slate-600 hover:underline">返回人物</Link>}>
+    <PageSection title={person.name} description="人物详情承载画像、关系、事件、阶段、笔记和定向导入。" actions={<Link href="/people" className="text-sm text-[color:var(--dossier-muted)] hover:underline">返回人物</Link>}>
       <StatusMessage error={error} message={message} />
-      <div className="flex flex-wrap gap-2 border-b border-slate-200">
+      <div className="flex flex-wrap gap-2 border-b border-[color:var(--dossier-line)]">
         {tabs.map(([key, label]) => (
-          <button key={key} onClick={() => setTab(key)} className={`border-b-2 px-3 py-2 text-sm ${tab === key ? "border-slate-900 text-slate-900" : "border-transparent text-slate-500"}`}>
+          <button key={key} onClick={() => setTab(key)} className={`border-b-2 px-3 py-2 text-sm font-semibold ${tab === key ? "border-[color:var(--dossier-green)] text-[color:var(--dossier-green)]" : "border-transparent text-[color:var(--dossier-muted)]"}`}>
             {label}
           </button>
         ))}
@@ -241,24 +300,24 @@ export function PersonDetailClient({ id }: { id: number }) {
       {tab === "profile" ? (
         <div className="grid gap-4 lg:grid-cols-[180px_1fr]">
           <div className="space-y-3">
-            {person.photo_path ? <img src={apiUrl(person.photo_path)} alt={`${person.name} 头像`} className="h-40 w-40 rounded border border-slate-200 object-cover" /> : <div className="flex h-40 w-40 items-center justify-center rounded border border-slate-200 bg-white text-slate-400">无头像</div>}
+            {person.photo_path ? <img src={apiUrl(person.photo_path)} alt={`${person.name} 头像`} className="h-40 w-40 rounded-[8px] border border-[color:var(--dossier-line)] object-cover" /> : <div className="flex h-40 w-40 items-center justify-center rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] text-[color:var(--dossier-muted)]">无头像</div>}
             <form onSubmit={uploadPhoto} className="space-y-2">
               <input name="file" type="file" accept="image/*" className="text-sm" required />
               <ActionButton icon={<Upload size={16} />}>上传</ActionButton>
             </form>
           </div>
-          <form onSubmit={updateProfile} className="grid gap-3 rounded border border-slate-200 bg-white p-4 md:grid-cols-2">
+          <form onSubmit={updateProfile} className="dossier-panel grid gap-3 p-4 md:grid-cols-2">
             <Field label="姓名"><TextInput name="name" defaultValue={person.name} required /></Field>
             <Field label="别名"><TextInput name="aliases" defaultValue={joinList(person.aliases)} /></Field>
             <Field label="重要度"><TextInput name="importance" type="number" min="0" max="5" defaultValue={person.importance ?? 0} /></Field>
             <div className="flex items-end"><ActionButton icon={<Save size={16} />}>保存</ActionButton></div>
             <div className="md:col-span-2"><Field label="简介"><TextArea name="bio" defaultValue={person.bio ?? ""} /></Field></div>
           </form>
-          <form onSubmit={mergePerson} className="space-y-3 rounded border border-slate-200 bg-white p-4 lg:col-span-2">
+          <form onSubmit={mergePerson} className="dossier-panel space-y-3 p-4 lg:col-span-2">
             <h2 className="text-base font-semibold">合并人物</h2>
             <div className="flex flex-wrap items-end gap-3">
               <Field label="目标人物">
-                <select name="target_person_id" className="min-h-10 rounded border border-slate-200 bg-white px-3 py-2 text-sm">
+                <select name="target_person_id" className="min-h-10 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-3 py-2 text-sm">
                   <option value="">选择目标</option>
                   {people.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                 </select>
@@ -271,29 +330,29 @@ export function PersonDetailClient({ id }: { id: number }) {
 
       {tab === "relationships" ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-          <div className="rounded border border-slate-200 bg-white">
+          <div className="dossier-panel">
             {detail.relationships.map((relationship) => (
-              <div key={relationship.id} className="flex items-start justify-between gap-3 border-b border-slate-100 p-4 text-sm last:border-0">
+              <div key={relationship.id} className="flex items-start justify-between gap-3 border-b border-[color:var(--dossier-line)] p-4 text-sm last:border-0">
                 <div>
                   <div className="font-medium">{relationship.relation_type} {relationship.role ? `· ${relationship.role}` : ""}</div>
-                  <div className="text-slate-500">{endpointLabel(relationship.from_type, relationship.from_id)} → {endpointLabel(relationship.to_type, relationship.to_id)}</div>
+                  <div className="text-[color:var(--dossier-muted)]">{endpointLabel(relationship.from_type, relationship.from_id)} → {endpointLabel(relationship.to_type, relationship.to_id)}</div>
                 </div>
                 <ActionButton type="button" variant="danger" icon={<Trash2 size={16} />} onClick={() => deleteRelationship(relationship)}>删除</ActionButton>
               </div>
             ))}
-            {detail.relationships.length === 0 ? <p className="p-4 text-sm text-slate-500">暂无关系</p> : null}
+            {detail.relationships.length === 0 ? <p className="p-4 text-sm text-[color:var(--dossier-muted)]">暂无关系</p> : null}
           </div>
-          <form onSubmit={createRelationship} className="space-y-3 rounded border border-slate-200 bg-white p-4">
+          <form onSubmit={createRelationship} className="dossier-panel space-y-3 p-4">
             <h2 className="text-base font-semibold">新增关系</h2>
             <Field label="方向">
-              <select name="direction" className="min-h-10 rounded border border-slate-200 bg-white px-3 py-2 text-sm">
+              <select name="direction" className="min-h-10 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-3 py-2 text-sm">
                 <option value="self_current">我 → {person.name}</option>
                 <option value="current_other">{person.name} → 其他人物</option>
                 <option value="other_current">其他人物 → {person.name}</option>
               </select>
             </Field>
             <Field label="其他人物">
-              <select name="other_person_id" className="min-h-10 rounded border border-slate-200 bg-white px-3 py-2 text-sm">
+              <select name="other_person_id" className="min-h-10 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-3 py-2 text-sm">
                 <option value="">仅 person↔person 时选择</option>
                 {people.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
               </select>
@@ -310,7 +369,7 @@ export function PersonDetailClient({ id }: { id: number }) {
         <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
           <div className="space-y-3">
             {detail.events.map((item) => (
-              <form key={item.id} onSubmit={(event) => updateEvent(event, item.id)} className="grid gap-3 rounded border border-slate-200 bg-white p-4 md:grid-cols-4">
+              <form key={item.id} onSubmit={(event) => updateEvent(event, item.id)} className="dossier-panel grid gap-3 p-4 md:grid-cols-4">
                 <Field label="日期"><TextInput name="occurred_at" type="date" defaultValue={item.occurred_at ?? ""} /></Field>
                 <Field label="标题"><TextInput name="title" defaultValue={item.title} required /></Field>
                 <Field label="重要度"><TextInput name="importance" type="number" min="0" max="5" defaultValue={item.importance ?? 0} /></Field>
@@ -321,9 +380,9 @@ export function PersonDetailClient({ id }: { id: number }) {
                 <div className="md:col-span-4"><Field label="描述"><TextArea name="description" defaultValue={item.description ?? ""} /></Field></div>
               </form>
             ))}
-            {detail.events.length === 0 ? <p className="rounded border border-slate-200 bg-white p-4 text-sm text-slate-500">暂无事件</p> : null}
+            {detail.events.length === 0 ? <p className="dossier-panel p-4 text-sm text-[color:var(--dossier-muted)]">暂无事件</p> : null}
           </div>
-          <form onSubmit={createEvent} className="space-y-3 rounded border border-slate-200 bg-white p-4">
+          <form onSubmit={createEvent} className="dossier-panel space-y-3 p-4">
             <h2 className="text-base font-semibold">新增事件</h2>
             <Field label="日期"><TextInput name="occurred_at" type="date" /></Field>
             <Field label="标题"><TextInput name="title" required /></Field>
@@ -335,22 +394,22 @@ export function PersonDetailClient({ id }: { id: number }) {
 
       {tab === "stages" ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-          <div className="rounded border border-slate-200 bg-white">
+          <div className="dossier-panel">
             {detail.stages.map((assignment) => (
-              <div key={assignment.id} className="flex items-start justify-between gap-3 border-b border-slate-100 p-4 text-sm last:border-0">
+              <div key={assignment.id} className="flex items-start justify-between gap-3 border-b border-[color:var(--dossier-line)] p-4 text-sm last:border-0">
                 <div>
                   <div className="font-medium">{assignment.stage?.name ?? `阶段 ${assignment.stage_id}`}</div>
-                  <div className="text-slate-500">{assignment.role_in_stage} {assignment.started_at ? `${assignment.started_at} - ${assignment.ended_at ?? "至今"}` : ""}</div>
+                  <div className="text-[color:var(--dossier-muted)]">{assignment.role_in_stage} {assignment.started_at ? `${assignment.started_at} - ${assignment.ended_at ?? "至今"}` : ""}</div>
                 </div>
                 <ActionButton type="button" variant="danger" icon={<Trash2 size={16} />} onClick={() => removeStage(assignment.stage_id)}>移除</ActionButton>
               </div>
             ))}
-            {detail.stages.length === 0 ? <p className="p-4 text-sm text-slate-500">暂无阶段</p> : null}
+            {detail.stages.length === 0 ? <p className="p-4 text-sm text-[color:var(--dossier-muted)]">暂无阶段</p> : null}
           </div>
-          <form onSubmit={addStage} className="space-y-3 rounded border border-slate-200 bg-white p-4">
+          <form onSubmit={addStage} className="dossier-panel space-y-3 p-4">
             <h2 className="text-base font-semibold">挂接阶段</h2>
             <Field label="阶段">
-              <select name="stage_id" className="min-h-10 rounded border border-slate-200 bg-white px-3 py-2 text-sm" required>
+              <select name="stage_id" className="min-h-10 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-3 py-2 text-sm" required>
                 <option value="">选择阶段</option>
                 {stages.map((stage) => <option key={stage.id} value={stage.id}>{stage.name}</option>)}
               </select>
@@ -366,9 +425,28 @@ export function PersonDetailClient({ id }: { id: number }) {
       ) : null}
 
       {tab === "notes" ? (
-        <div className="rounded border border-slate-200 bg-white">
-          {detail.notes.map((note) => <p key={note.id} className="border-b border-slate-100 p-4 text-sm last:border-0">{note.content}</p>)}
-          {detail.notes.length === 0 ? <p className="p-4 text-sm text-slate-500">暂无笔记</p> : null}
+        <div className="dossier-panel">
+          {detail.notes.map((note) => <p key={note.id} className="border-b border-[color:var(--dossier-line)] p-4 text-sm last:border-0">{note.content}</p>)}
+          {detail.notes.length === 0 ? <p className="p-4 text-sm text-[color:var(--dossier-muted)]">暂无笔记</p> : null}
+        </div>
+      ) : null}
+
+      {tab === "import" ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <form onSubmit={importMemoryFile} className="dossier-panel grid gap-4 p-4">
+            <h2 className="text-base font-semibold">导入文件到 {person.name}</h2>
+            <Field label="文件">
+              <input name="file" type="file" accept=".txt,.md,.docx" multiple className="text-sm" />
+            </Field>
+            <ActionButton icon={<FileUp size={16} />} disabled={importing}>导入文件</ActionButton>
+          </form>
+          <form onSubmit={importMemoryText} className="dossier-panel grid gap-4 p-4">
+            <h2 className="text-base font-semibold">粘贴文本到 {person.name}</h2>
+            <Field label="文本">
+              <TextArea value={memoryText} onChange={(event) => setMemoryText(event.target.value)} rows={8} />
+            </Field>
+            <ActionButton icon={<ClipboardPaste size={16} />} disabled={importing}>导入文本</ActionButton>
+          </form>
         </div>
       ) : null}
     </PageSection>

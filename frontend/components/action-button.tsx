@@ -9,11 +9,11 @@ type ActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 export function ActionButton({ icon, variant = "primary", className = "", children, ...props }: ActionButtonProps) {
   const base =
-    "inline-flex min-h-9 items-center justify-center gap-2 rounded border px-3 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
+    "inline-flex min-h-9 items-center justify-center gap-2 rounded-[8px] border px-3 py-1.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60";
   const variants = {
-    primary: "border-slate-900 bg-slate-900 text-white hover:bg-slate-700",
-    secondary: "border-slate-200 bg-white text-slate-800 hover:bg-slate-100",
-    danger: "border-rose-200 bg-white text-rose-700 hover:bg-rose-50"
+    primary: "border-[color:var(--dossier-green)] bg-[color:var(--dossier-green)] text-[color:var(--dossier-panel)] hover:bg-[#2d4d3a]",
+    secondary: "border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] text-[color:var(--dossier-green)] hover:bg-[color:var(--dossier-green-soft)]",
+    danger: "border-[#dfb8aa] bg-[color:var(--dossier-panel)] text-[color:var(--dossier-rust)] hover:bg-[#f6e5df]"
   };
   return (
     <button className={`${base} ${variants[variant]} ${className}`} {...props}>

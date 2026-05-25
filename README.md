@@ -5,7 +5,7 @@ Local-first relationship dossier for Chinese interpersonal communication.
 ## Quickstart
 
 ```bash
-git clone https://github.com/UntR/TencentDB-Agent-Memory.git dossier
+git clone https://github.com/UntR/Dossier.git dossier
 cd dossier && npm install
 npm start
 ```

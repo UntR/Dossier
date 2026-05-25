@@ -99,10 +99,10 @@ export function SelfPageClient() {
   if (!profile) return <PageSection title="我的画像"><StatusMessage error={error} message="加载中" /></PageSection>;
 
   return (
-    <PageSection title="我的画像">
+    <PageSection title="我的画像" description="维护自己的长期背景、沟通偏好和人生阶段，供对话检索使用。">
       <StatusMessage error={error} message={message} />
       <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
-        <form onSubmit={saveProfile} className="grid gap-3 rounded border border-slate-200 bg-white p-4 md:grid-cols-2">
+        <form onSubmit={saveProfile} className="dossier-panel grid gap-3 p-4 md:grid-cols-2">
           <Field label="姓名"><TextInput name="name" defaultValue={profile.name} required /></Field>
           <Field label="沟通风格"><TextInput name="communication_style" defaultValue={profile.communication_style ?? ""} /></Field>
           <Field label="敏感点"><TextInput name="sensitivities" defaultValue={joinList(profile.sensitivities)} /></Field>
@@ -111,7 +111,7 @@ export function SelfPageClient() {
           <ActionButton icon={<Save size={16} />}>保存</ActionButton>
         </form>
 
-        <form onSubmit={createStage} className="space-y-3 rounded border border-slate-200 bg-white p-4">
+        <form onSubmit={createStage} className="dossier-panel space-y-3 p-4">
           <h2 className="text-base font-semibold">新增人生阶段</h2>
           <Field label="名称"><TextInput name="name" placeholder="大学/工作1" required /></Field>
           <Field label="类型"><TextInput name="kind" placeholder="教育/工作/其他" /></Field>
@@ -126,45 +126,45 @@ export function SelfPageClient() {
         </form>
       </div>
 
-      <div className="rounded border border-slate-200 bg-white">
-        <table className="w-full border-collapse text-left text-sm">
-          <thead className="bg-slate-100 text-slate-600">
+      <div className="dossier-panel overflow-x-auto">
+        <table className="dossier-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3 font-medium">名称</th>
-              <th className="px-4 py-3 font-medium">类型</th>
-              <th className="px-4 py-3 font-medium">地点</th>
-              <th className="px-4 py-3 font-medium">开始</th>
-              <th className="px-4 py-3 font-medium">结束</th>
-              <th className="px-4 py-3 font-medium">排序</th>
-              <th className="px-4 py-3 font-medium">备注</th>
-              <th className="px-4 py-3 font-medium">操作</th>
+              <th>名称</th>
+              <th>类型</th>
+              <th>地点</th>
+              <th>开始</th>
+              <th>结束</th>
+              <th>排序</th>
+              <th>备注</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody>
             {stages.map((stage) => (
-              <tr key={stage.id} className="border-t border-slate-100">
-                <td className="px-3 py-3">
-                  <input form={`stage-${stage.id}`} name="name" defaultValue={stage.name} required className="min-h-9 w-32 rounded border border-slate-200 px-2 text-sm outline-none focus:border-slate-500" />
+              <tr key={stage.id}>
+                <td>
+                  <input form={`stage-${stage.id}`} name="name" defaultValue={stage.name} required className="min-h-9 w-32 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-2 text-sm outline-none focus:border-[color:var(--dossier-green)]" />
                 </td>
-                <td className="px-3 py-3">
-                  <input form={`stage-${stage.id}`} name="kind" defaultValue={stage.kind ?? ""} className="min-h-9 w-24 rounded border border-slate-200 px-2 text-sm outline-none focus:border-slate-500" />
+                <td>
+                  <input form={`stage-${stage.id}`} name="kind" defaultValue={stage.kind ?? ""} className="min-h-9 w-24 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-2 text-sm outline-none focus:border-[color:var(--dossier-green)]" />
                 </td>
-                <td className="px-3 py-3">
-                  <input form={`stage-${stage.id}`} name="location" defaultValue={stage.location ?? ""} className="min-h-9 w-28 rounded border border-slate-200 px-2 text-sm outline-none focus:border-slate-500" />
+                <td>
+                  <input form={`stage-${stage.id}`} name="location" defaultValue={stage.location ?? ""} className="min-h-9 w-28 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-2 text-sm outline-none focus:border-[color:var(--dossier-green)]" />
                 </td>
-                <td className="px-3 py-3">
-                  <input form={`stage-${stage.id}`} name="started_at" type="date" defaultValue={stage.started_at ?? ""} className="min-h-9 w-36 rounded border border-slate-200 px-2 text-sm outline-none focus:border-slate-500" />
+                <td>
+                  <input form={`stage-${stage.id}`} name="started_at" type="date" defaultValue={stage.started_at ?? ""} className="min-h-9 w-36 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-2 text-sm outline-none focus:border-[color:var(--dossier-green)]" />
                 </td>
-                <td className="px-3 py-3">
-                  <input form={`stage-${stage.id}`} name="ended_at" type="date" defaultValue={stage.ended_at ?? ""} className="min-h-9 w-36 rounded border border-slate-200 px-2 text-sm outline-none focus:border-slate-500" />
+                <td>
+                  <input form={`stage-${stage.id}`} name="ended_at" type="date" defaultValue={stage.ended_at ?? ""} className="min-h-9 w-36 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-2 text-sm outline-none focus:border-[color:var(--dossier-green)]" />
                 </td>
-                <td className="px-3 py-3">
-                  <input form={`stage-${stage.id}`} name="sort_order" type="number" defaultValue={stage.sort_order ?? ""} className="min-h-9 w-20 rounded border border-slate-200 px-2 text-sm outline-none focus:border-slate-500" />
+                <td>
+                  <input form={`stage-${stage.id}`} name="sort_order" type="number" defaultValue={stage.sort_order ?? ""} className="min-h-9 w-20 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-2 text-sm outline-none focus:border-[color:var(--dossier-green)]" />
                 </td>
-                <td className="px-3 py-3">
-                  <input form={`stage-${stage.id}`} name="notes" defaultValue={stage.notes ?? ""} className="min-h-9 w-44 rounded border border-slate-200 px-2 text-sm outline-none focus:border-slate-500" />
+                <td>
+                  <input form={`stage-${stage.id}`} name="notes" defaultValue={stage.notes ?? ""} className="min-h-9 w-44 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-2 text-sm outline-none focus:border-[color:var(--dossier-green)]" />
                 </td>
-                <td className="px-3 py-3">
+                <td>
                   <form id={`stage-${stage.id}`} onSubmit={(event) => updateStage(event, stage)} className="flex gap-2">
                     <ActionButton icon={<Save size={16} />}>保存</ActionButton>
                     <ActionButton type="button" variant="danger" icon={<Trash2 size={16} />} onClick={() => removeStage(stage)}>删除</ActionButton>
@@ -172,7 +172,7 @@ export function SelfPageClient() {
                 </td>
               </tr>
             ))}
-            {stages.length === 0 ? <tr><td className="px-4 py-6 text-slate-500" colSpan={8}>暂无人生阶段</td></tr> : null}
+            {stages.length === 0 ? <tr><td className="px-4 py-6 text-[color:var(--dossier-muted)]" colSpan={8}>暂无人生阶段</td></tr> : null}
           </tbody>
         </table>
       </div>

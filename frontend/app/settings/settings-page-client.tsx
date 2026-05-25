@@ -78,6 +78,7 @@ export function SettingsPageClient() {
   return (
     <PageSection
       title="设置"
+      description="模型、阈值和本地导出路径集中在这里，保持为安静的工具页。"
       actions={
         <ActionButton type="button" variant="secondary" icon={<RefreshCw size={16} />} onClick={() => load().catch((err: Error) => setError(err.message))}>
           刷新
@@ -86,13 +87,13 @@ export function SettingsPageClient() {
     >
       <StatusMessage error={error} message={message} />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <form onSubmit={save} className="grid gap-4 rounded border border-slate-200 bg-white p-4">
+        <form onSubmit={save} className="dossier-panel grid gap-4 p-4">
           <label className="grid gap-1 text-sm">
-            <span className="font-medium text-slate-700">对话模型</span>
+            <span className="font-medium text-[color:var(--dossier-muted)]">对话模型</span>
             <select
               name="chat_model"
               defaultValue={settings.chat_model ?? "anthropic/claude-sonnet-4-6"}
-              className="min-h-10 rounded border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
+              className="min-h-10 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-3 py-2 text-sm outline-none focus:border-[color:var(--dossier-green)]"
             >
               {modelOptions.map((model) => (
                 <option key={model} value={model}>{model}</option>
@@ -100,11 +101,11 @@ export function SettingsPageClient() {
             </select>
           </label>
           <label className="grid gap-1 text-sm">
-            <span className="font-medium text-slate-700">抽取模型</span>
+            <span className="font-medium text-[color:var(--dossier-muted)]">抽取模型</span>
             <select
               name="extraction_model"
               defaultValue={settings.extraction_model ?? "anthropic/claude-haiku-4-5-20251001"}
-              className="min-h-10 rounded border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
+              className="min-h-10 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-3 py-2 text-sm outline-none focus:border-[color:var(--dossier-green)]"
             >
               {modelOptions.map((model) => (
                 <option key={model} value={model}>{model}</option>
@@ -118,13 +119,13 @@ export function SettingsPageClient() {
             <TextInput name="obsidian_export_path" defaultValue={settings.obsidian_export_path ?? ""} />
           </Field>
           <ActionButton icon={<Save size={16} />}>保存</ActionButton>
-          <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+          <div className="flex flex-wrap gap-2 border-t border-[color:var(--dossier-line)] pt-4">
             <ActionButton type="button" variant="secondary" icon={<Upload size={16} />} onClick={exportObsidian}>
               导出到 Obsidian
             </ActionButton>
             <a
               href={apiUrl("/api/export/zip")}
-              className="inline-flex min-h-9 items-center justify-center gap-2 rounded border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 transition hover:bg-slate-100"
+              className="inline-flex min-h-9 items-center justify-center gap-2 rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel)] px-3 py-1.5 text-sm font-semibold text-[color:var(--dossier-green)] transition hover:bg-[color:var(--dossier-green-soft)]"
             >
               <Download size={16} />
               <span>下载 ZIP</span>
@@ -132,19 +133,23 @@ export function SettingsPageClient() {
           </div>
         </form>
 
-        <aside className="space-y-3 rounded border border-slate-200 bg-white p-4">
-          <h2 className="text-base font-semibold">模型 Provider</h2>
-          {providers.map((provider) => (
-            <div key={provider.provider} className="rounded border border-slate-100 p-3 text-sm">
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-medium">{providerLabel(provider.provider)}</p>
-                <span className={`rounded px-2 py-1 text-xs ${provider.configured ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
-                  {provider.configured ? "可用" : "未配置"}
-                </span>
+        <aside className="dossier-panel">
+          <div className="dossier-panel-header">
+            <h2 className="text-base font-semibold">模型 Provider</h2>
+          </div>
+          <div className="grid gap-3 p-4">
+            {providers.map((provider) => (
+              <div key={provider.provider} className="rounded-[8px] border border-[color:var(--dossier-line)] bg-[color:var(--dossier-panel-soft)] p-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium">{providerLabel(provider.provider)}</p>
+                  <span className={`rounded-[8px] px-2 py-1 text-xs ${provider.configured ? "bg-[color:var(--dossier-green-soft)] text-[color:var(--dossier-green)]" : "bg-[color:var(--dossier-panel-muted)] text-[color:var(--dossier-muted)]"}`}>
+                    {provider.configured ? "可用" : "未配置"}
+                  </span>
+                </div>
+                <p className="mt-2 break-words text-xs text-[color:var(--dossier-muted)]">{provider.models.join("，")}</p>
               </div>
-              <p className="mt-2 break-words text-xs text-slate-500">{provider.models.join("，")}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </aside>
       </div>
     </PageSection>
